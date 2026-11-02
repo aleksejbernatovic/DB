@@ -398,47 +398,10 @@ LEFT OUTER JOIN "Degrees" d ON t."DegreeID" = d."ID";
  Пецевич   | Виктор    | 
 (12 rows)
 
-(
-  SELECT t."LastName", t."FirstName", d."Name" AS degree
-  FROM "Teacher" t INNER JOIN "Degrees" d ON t."DegreeID" = d."ID"
-)
-UNION
-(
-  SELECT t."LastName", t."FirstName", NULL FROM "Teacher" t
-  WHERE NOT EXISTS (SELECT 1 FROM "Degrees" d WHERE d."ID" = t."DegreeID")
-)
-ORDER BY "LastName";
- LastName  | FirstName |               degree                
------------+-----------+-------------------------------------
- Гринкевич | Татьяна   | Кандидат физико-математических наук
- Гуща      | Юлия      | 
- Жук       | Елена     | Кандидат физико-математических наук
- Климович  | Наталья   | 
- Ковальчук | Андрей    | Кандидат технических наук
- Лукашевич | Сергей    | Кандидат технических наук
- Мельник   | Дмитрий   | 
- Новик     | Павел     | 
- Пецевич   | Виктор    | 
- Романович | Игорь     | Доктор физико-математических наук
- Савицкая  | Ольга     | Кандидат физико-математических наук
- Ярошевич  | Марина    | Кандидат экономических наук
-(12 rows)
-
 SELECT t."LastName", t."FirstName"
 FROM "Teacher" t
 LEFT OUTER JOIN "Degrees" d ON t."DegreeID" = d."ID"
 WHERE d."ID" IS NULL;
- LastName | FirstName 
-----------+-----------
- Новик    | Павел
- Мельник  | Дмитрий
- Климович | Наталья
- Гуща     | Юлия
- Пецевич  | Виктор
-(5 rows)
-
-SELECT t."LastName", t."FirstName" FROM "Teacher" t
-WHERE NOT EXISTS (SELECT 1 FROM "Degrees" d WHERE d."ID" = t."DegreeID");
  LastName | FirstName 
 ----------+-----------
  Новик    | Павел
@@ -478,39 +441,10 @@ RIGHT OUTER JOIN "Degrees" d ON t."DegreeID" = d."ID";
            |           | Доктор технических наук
 (8 rows)
 
-(
-  SELECT t."LastName", t."FirstName", d."Name" AS degree
-  FROM "Teacher" t INNER JOIN "Degrees" d ON t."DegreeID" = d."ID"
-)
-UNION
-(
-  SELECT NULL, NULL, d."Name" FROM "Degrees" d
-  WHERE NOT EXISTS (SELECT 1 FROM "Teacher" t WHERE t."DegreeID" = d."ID")
-)
-ORDER BY degree;
- LastName  | FirstName |               degree                
------------+-----------+-------------------------------------
-           |           | Доктор технических наук
- Романович | Игорь     | Доктор физико-математических наук
- Лукашевич | Сергей    | Кандидат технических наук
- Ковальчук | Андрей    | Кандидат технических наук
- Савицкая  | Ольга     | Кандидат физико-математических наук
- Жук       | Елена     | Кандидат физико-математических наук
- Гринкевич | Татьяна   | Кандидат физико-математических наук
- Ярошевич  | Марина    | Кандидат экономических наук
-(8 rows)
-
 SELECT d."Name" AS degree
 FROM "Teacher" t
 RIGHT JOIN "Degrees" d ON t."DegreeID" = d."ID"
 WHERE t."ID" IS NULL;
-         degree          
--------------------------
- Доктор технических наук
-(1 row)
-
-SELECT d."Name" AS degree FROM "Degrees" d
-WHERE NOT EXISTS (SELECT 1 FROM "Teacher" t WHERE t."DegreeID" = d."ID");
          degree          
 -------------------------
  Доктор технических наук
@@ -536,32 +470,6 @@ FULL OUTER JOIN "Degrees" d ON t."DegreeID" = d."ID";
  Пецевич   | Виктор    | 
 (13 rows)
 
-(
-  SELECT t."LastName", t."FirstName", d."Name" AS degree
-  FROM "Teacher" t LEFT JOIN "Degrees" d ON t."DegreeID" = d."ID"
-)
-UNION
-(
-  SELECT t."LastName", t."FirstName", d."Name" AS degree
-  FROM "Teacher" t RIGHT JOIN "Degrees" d ON t."DegreeID" = d."ID"
-);
- LastName  | FirstName |               degree                
------------+-----------+-------------------------------------
-           |           | Доктор технических наук
- Пецевич   | Виктор    | 
- Лукашевич | Сергей    | Кандидат технических наук
- Климович  | Наталья   | 
- Мельник   | Дмитрий   | 
- Савицкая  | Ольга     | Кандидат физико-математических наук
- Жук       | Елена     | Кандидат физико-математических наук
- Новик     | Павел     | 
- Романович | Игорь     | Доктор физико-математических наук
- Гринкевич | Татьяна   | Кандидат физико-математических наук
- Гуща      | Юлия      | 
- Ковальчук | Андрей    | Кандидат технических наук
- Ярошевич  | Марина    | Кандидат экономических наук
-(13 rows)
-
 SELECT t."LastName", t."FirstName", d."Name" AS degree
 FROM "Teacher" t
 FULL OUTER JOIN "Degrees" d ON t."DegreeID" = d."ID"
@@ -574,27 +482,6 @@ WHERE t."ID" IS NULL OR d."ID" IS NULL;
  Климович | Наталья   | 
  Гуща     | Юлия      | 
  Пецевич  | Виктор    | 
-(6 rows)
-
-(
-  SELECT t."LastName", t."FirstName", d."Name" AS degree
-  FROM "Teacher" t LEFT JOIN "Degrees" d ON t."DegreeID" = d."ID"
-  WHERE d."ID" IS NULL
-)
-UNION
-(
-  SELECT t."LastName", t."FirstName", d."Name" AS degree
-  FROM "Teacher" t RIGHT JOIN "Degrees" d ON t."DegreeID" = d."ID"
-  WHERE t."ID" IS NULL
-);
- LastName | FirstName |         degree          
-----------+-----------+-------------------------
- Гуща     | Юлия      | 
- Климович | Наталья   | 
- Мельник  | Дмитрий   | 
- Новик    | Павел     | 
- Пецевич  | Виктор    | 
-          |           | Доктор технических наук
 (6 rows)
 
 SELECT first."Name" AS group_name, first."StudyYear",

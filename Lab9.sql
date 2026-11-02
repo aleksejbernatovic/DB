@@ -53,17 +53,6 @@ SELECT t."LastName", t."FirstName", d."Name" AS degree
 FROM "Teacher" t
 LEFT OUTER JOIN "Degrees" d ON t."DegreeID" = d."ID";
 
--- 7а. LEFT JOIN через подзапрос
-(
-  SELECT t."LastName", t."FirstName", d."Name" AS degree
-  FROM "Teacher" t INNER JOIN "Degrees" d ON t."DegreeID" = d."ID"
-)
-UNION
-(
-  SELECT t."LastName", t."FirstName", NULL FROM "Teacher" t
-  WHERE NOT EXISTS (SELECT 1 FROM "Degrees" d WHERE d."ID" = t."DegreeID")
-)
-ORDER BY "LastName";
 
 -- 8. LEFT JOIN ... WHERE B.Key IS NULL: преподаватели без степени
 SELECT t."LastName", t."FirstName"
@@ -71,9 +60,6 @@ FROM "Teacher" t
 LEFT OUTER JOIN "Degrees" d ON t."DegreeID" = d."ID"
 WHERE d."ID" IS NULL;
 
--- 8а. То же через подзапрос
-SELECT t."LastName", t."FirstName" FROM "Teacher" t
-WHERE NOT EXISTS (SELECT 1 FROM "Degrees" d WHERE d."ID" = t."DegreeID");
 
 -- 9. RIGHT JOIN: все степени и их обладатели, степень без обладателей — с NULL
 SELECT t."LastName", t."FirstName", d."Name" AS degree
@@ -84,62 +70,23 @@ SELECT t."LastName", t."FirstName", d."Name" AS degree
 FROM "Teacher" t
 RIGHT OUTER JOIN "Degrees" d ON t."DegreeID" = d."ID";
 
--- 9а. RIGHT JOIN через подзапрос
-(
-  SELECT t."LastName", t."FirstName", d."Name" AS degree
-  FROM "Teacher" t INNER JOIN "Degrees" d ON t."DegreeID" = d."ID"
-)
-UNION
-(
-  SELECT NULL, NULL, d."Name" FROM "Degrees" d
-  WHERE NOT EXISTS (SELECT 1 FROM "Teacher" t WHERE t."DegreeID" = d."ID")
-)
-ORDER BY degree;
-
 -- 10. RIGHT JOIN ... WHERE A.Key IS NULL: степени, которых нет ни у одного преподавателя
 SELECT d."Name" AS degree
 FROM "Teacher" t
 RIGHT JOIN "Degrees" d ON t."DegreeID" = d."ID"
 WHERE t."ID" IS NULL;
 
--- 10а. То же через подзапрос
-SELECT d."Name" AS degree FROM "Degrees" d
-WHERE NOT EXISTS (SELECT 1 FROM "Teacher" t WHERE t."DegreeID" = d."ID");
 
 -- 11. FULL OUTER JOIN: и преподаватели без степени, и степени без преподавателей
 SELECT t."LastName", t."FirstName", d."Name" AS degree
 FROM "Teacher" t
 FULL OUTER JOIN "Degrees" d ON t."DegreeID" = d."ID";
 
--- 11а. То же как в MySQL: LEFT JOIN UNION RIGHT JOIN
-(
-  SELECT t."LastName", t."FirstName", d."Name" AS degree
-  FROM "Teacher" t LEFT JOIN "Degrees" d ON t."DegreeID" = d."ID"
-)
-UNION
-(
-  SELECT t."LastName", t."FirstName", d."Name" AS degree
-  FROM "Teacher" t RIGHT JOIN "Degrees" d ON t."DegreeID" = d."ID"
-);
-
 -- 12. FULL OUTER JOIN ... WHERE A.Key IS NULL OR B.Key IS NULL: только строки без пары
 SELECT t."LastName", t."FirstName", d."Name" AS degree
 FROM "Teacher" t
 FULL OUTER JOIN "Degrees" d ON t."DegreeID" = d."ID"
 WHERE t."ID" IS NULL OR d."ID" IS NULL;
-
--- 12а. То же через UNION
-(
-  SELECT t."LastName", t."FirstName", d."Name" AS degree
-  FROM "Teacher" t LEFT JOIN "Degrees" d ON t."DegreeID" = d."ID"
-  WHERE d."ID" IS NULL
-)
-UNION
-(
-  SELECT t."LastName", t."FirstName", d."Name" AS degree
-  FROM "Teacher" t RIGHT JOIN "Degrees" d ON t."DegreeID" = d."ID"
-  WHERE t."ID" IS NULL
-);
 
 -- 13. SELF JOIN: пары групп одной специальности, идущих курс за курсом (как «пары чисел по возрастанию»)
 SELECT first."Name" AS group_name, first."StudyYear",
