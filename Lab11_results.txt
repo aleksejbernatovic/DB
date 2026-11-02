@@ -1,0 +1,344 @@
+SET search_path TO public;
+SET
+SELECT d."Name" AS discipline,
+       (SELECT string_agg(ty."Name", ', ' ORDER BY ty."ID")
+        FROM "DisciplineHours" dh
+        INNER JOIN "Types" ty ON ty."ID" = dh."TypeID"
+        WHERE dh."DisciplineID" = d."ID") AS types_description
+FROM "Discipline" d
+ORDER BY d."Name";
+                   discipline                    |       types_description        
+-------------------------------------------------+--------------------------------
+ Базы данных                                     | Лекция, Лабораторная
+ Веб-программирование                            | Лекция, Лабораторная
+ Дискретная математика                           | Лекция, Практика
+ Компьютерные сети                               | Лекция, Лабораторная
+ Криптографические методы защиты информации      | Лекция, Практика, Лабораторная
+ Линейная алгебра и аналитическая геометрия      | Лекция, Практика
+ Математический анализ                           | Лекция, Практика
+ Объектно-ориентированное программирование       | Лекция, Лабораторная
+ Операционные системы                            | Лекция, Лабораторная
+ Программирование на C++                         | Лекция, Лабораторная
+ Теория вероятностей и математическая статистика | Лекция, Практика
+ Физика                                          | Лекция, Практика, Лабораторная
+ Экономическая теория                            | Лекция, Семинар
+(13 rows)
+
+SELECT types_details."DisciplineID", d."Name" AS discipline, types_details.types_description, types_details.total_hours
+FROM (
+  SELECT dh."DisciplineID",
+         string_agg(ty."Name", ', ' ORDER BY ty."ID") AS types_description,
+         SUM(dh."Hours") AS total_hours
+  FROM "DisciplineHours" dh
+  INNER JOIN "Types" ty ON ty."ID" = dh."TypeID"
+  GROUP BY dh."DisciplineID"
+) AS types_details
+INNER JOIN "Discipline" d ON d."ID" = types_details."DisciplineID"
+ORDER BY types_details.total_hours DESC;
+ DisciplineID |                   discipline                    |       types_description        | total_hours 
+--------------+-------------------------------------------------+--------------------------------+-------------
+            8 | Математический анализ                           | Лекция, Практика               |          96
+            2 | Программирование на C++                         | Лекция, Лабораторная           |          80
+            1 | Базы данных                                     | Лекция, Лабораторная           |          68
+            9 | Линейная алгебра и аналитическая геометрия      | Лекция, Практика               |          68
+            6 | Криптографические методы защиты информации      | Лекция, Практика, Лабораторная |          64
+           11 | Теория вероятностей и математическая статистика | Лекция, Практика               |          64
+           10 | Дискретная математика                           | Лекция, Практика               |          64
+           12 | Физика                                          | Лекция, Практика, Лабораторная |          64
+            3 | Веб-программирование                            | Лекция, Лабораторная           |          64
+            4 | Объектно-ориентированное программирование       | Лекция, Лабораторная           |          64
+            7 | Операционные системы                            | Лекция, Лабораторная           |          60
+            5 | Компьютерные сети                               | Лекция, Лабораторная           |          60
+           13 | Экономическая теория                            | Лекция, Семинар                |          48
+(13 rows)
+
+SELECT d."ID", d."Name"
+FROM "Discipline" d
+WHERE 2 = (SELECT COUNT(*) FROM "DisciplineHours" dh WHERE dh."DisciplineID" = d."ID")
+ORDER BY d."Name";
+ ID |                      Name                       
+----+-------------------------------------------------
+  1 | Базы данных
+  3 | Веб-программирование
+ 10 | Дискретная математика
+  5 | Компьютерные сети
+  9 | Линейная алгебра и аналитическая геометрия
+  8 | Математический анализ
+  4 | Объектно-ориентированное программирование
+  7 | Операционные системы
+  2 | Программирование на C++
+ 11 | Теория вероятностей и математическая статистика
+ 13 | Экономическая теория
+(11 rows)
+
+SELECT d."ID", d."Name"
+FROM "Discipline" d
+WHERE EXISTS (
+  SELECT 1 FROM "DisciplineHours" dh
+  INNER JOIN "Types" ty ON ty."ID" = dh."TypeID"
+  WHERE ty."Name" IN ('Лабораторная', 'Семинар') AND dh."DisciplineID" = d."ID"
+)
+ORDER BY d."Name";
+ ID |                    Name                    
+----+--------------------------------------------
+  1 | Базы данных
+  3 | Веб-программирование
+  5 | Компьютерные сети
+  6 | Криптографические методы защиты информации
+  4 | Объектно-ориентированное программирование
+  7 | Операционные системы
+  2 | Программирование на C++
+ 12 | Физика
+ 13 | Экономическая теория
+(9 rows)
+
+SELECT s."StudentID", s."LastName", s."FirstName"
+FROM "Student" s
+WHERE NOT EXISTS (
+  SELECT 1 FROM "Attempt" a
+  WHERE a."StudentID" = s."StudentID"
+)
+ORDER BY s."LastName";
+ StudentID |  LastName  | FirstName 
+-----------+------------+-----------
+       407 | Волкова    | Полина
+       405 | Жук        | Анна
+       408 | Ковалёв    | Иван
+       402 | Ковальчук  | Иван
+       404 | Козлов     | Артём
+       410 | Козлов     | Кирилл
+       409 | Лукашевич  | Егор
+       403 | Павлюкевич | Полина
+       401 | Павлюкевич | Иван
+       406 | Шевчук     | Егор
+(10 rows)
+
+SELECT s."StudentID", s."LastName", s."FirstName"
+FROM "Student" s
+WHERE s."StudentID" NOT IN (SELECT a."StudentID" FROM "Attempt" a)
+ORDER BY s."LastName";
+ StudentID |  LastName  | FirstName 
+-----------+------------+-----------
+       407 | Волкова    | Полина
+       405 | Жук        | Анна
+       408 | Ковалёв    | Иван
+       402 | Ковальчук  | Иван
+       404 | Козлов     | Артём
+       410 | Козлов     | Кирилл
+       409 | Лукашевич  | Егор
+       401 | Павлюкевич | Иван
+       403 | Павлюкевич | Полина
+       406 | Шевчук     | Егор
+(10 rows)
+
+SELECT g."Name" AS group_name, ROUND(AVG(a."Grade"), 2) AS avg_grade,
+       (SELECT ROUND(AVG("Grade"), 2) FROM "Attempt") AS overall_avg
+FROM "Attempt" a
+INNER JOIN "StudentGroup" sg ON sg."StudentID" = a."StudentID"
+INNER JOIN "Group" g ON g."ID" = sg."GroupID"
+GROUP BY g."Name"
+HAVING AVG(a."Grade") > (SELECT AVG("Grade") FROM "Attempt")
+ORDER BY avg_grade DESC;
+ group_name  | avg_grade | overall_avg 
+-------------+-----------+-------------
+ СДП-МАТ-251 |      6.74 |        6.41
+ СДП-ПИ-231  |      6.55 |        6.41
+ СДП-ИНФ-241 |      6.46 |        6.41
+ СДП-КБ-231  |      6.44 |        6.41
+(4 rows)
+
+SELECT t."LastName", t."FirstName", t."DepartmentID"
+FROM "Teacher" t
+WHERE t."DepartmentID" IN (
+  SELECT dep."ID" FROM "Department" dep
+  INNER JOIN "Facultys" f ON f."ID" = dep."FacultyID"
+  WHERE f."Name" = 'Факультет математики и информатики'
+)
+ORDER BY t."LastName";
+ LastName  | FirstName | DepartmentID 
+-----------+-----------+--------------
+ Гуща      | Юлия      |            1
+ Жук       | Елена     |            4
+ Климович  | Наталья   |            2
+ Ковальчук | Андрей    |            1
+ Лукашевич | Сергей    |            2
+ Мельник   | Дмитрий   |            4
+ Новик     | Павел     |            1
+ Пецевич   | Виктор    |            1
+ Романович | Игорь     |            3
+ Савицкая  | Ольга     |            2
+(10 rows)
+
+SELECT s."LastName", s."FirstName"
+FROM "Student" s
+WHERE EXISTS (SELECT 1 FROM "Attempt" a WHERE a."StudentID" = s."StudentID")
+  AND 5 < ALL (SELECT a."Grade" FROM "Attempt" a WHERE a."StudentID" = s."StudentID")
+ORDER BY s."LastName", s."FirstName";
+ LastName | FirstName 
+----------+-----------
+ Мельник  | Полина
+(1 row)
+
+SELECT s."LastName", s."FirstName"
+FROM "Student" s
+WHERE s."StudentID" = ANY (SELECT a."StudentID" FROM "Attempt" a WHERE a."Grade" = 10)
+ORDER BY s."LastName", s."FirstName"
+LIMIT 10;
+  LastName  | FirstName 
+------------+-----------
+ Бондаренко | Дарья
+ Бондаренко | Диана
+ Бондаренко | Егор
+ Бондаренко | Елизавета
+ Бондаренко | Никита
+ Волков     | Алексей
+ Волков     | Артём
+ Волков     | Денис
+ Волков     | Егор
+ Волкова    | Анастасия
+(10 rows)
+
+SELECT g."Name", g."SpecialtyID", g."StudyYear", g."StudyFormatID"
+FROM "Group" g
+WHERE (g."SpecialtyID", g."StudyYear") = (
+  SELECT "SpecialtyID", "StudyYear" FROM "Group" WHERE "Name" = 'СДП-ПИ-241'
+);
+    Name    | SpecialtyID | StudyYear | StudyFormatID 
+------------+-------------+-----------+---------------
+ СДП-ПИ-241 |           1 |         3 |             1
+ ЗФК-ПИ-241 |           1 |         3 |             2
+(2 rows)
+
+SELECT ranked.group_name, ranked."LastName", ranked."FirstName", ranked.avg_grade
+FROM (
+  SELECT g."Name" AS group_name, s."LastName", s."FirstName",
+         ROUND(AVG(a."Grade"), 2) AS avg_grade,
+         RANK() OVER (PARTITION BY g."ID" ORDER BY AVG(a."Grade") DESC) AS place
+  FROM "Attempt" a
+  INNER JOIN "Student" s ON s."StudentID" = a."StudentID"
+  INNER JOIN "StudentGroup" sg ON sg."StudentID" = s."StudentID"
+  INNER JOIN "Group" g ON g."ID" = sg."GroupID"
+  GROUP BY g."ID", g."Name", s."StudentID", s."LastName", s."FirstName"
+) AS ranked
+WHERE ranked.place = 1
+ORDER BY ranked.avg_grade DESC;
+ group_name  |  LastName  | FirstName | avg_grade 
+-------------+------------+-----------+-----------
+ СДП-МАТ-251 | Мельник    | Полина    |      8.50
+ СДП-КБ-231  | Мельник    | Никита    |      7.45
+ СДП-ИНФ-241 | Павлюкевич | Андрей    |      7.43
+ СДП-ПИ-231  | Романович  | Евгений   |      7.14
+ СДП-ПИ-241  | Сидоров    | Денис     |      7.00
+ ЗФК-ПИ-241  | Волков     | Денис     |      7.00
+ СДП-ПИ-251  | Карпович   | Алина     |      6.70
+(7 rows)
+
+SELECT t."ID", t."LastName", t."FirstName", (
+  SELECT COUNT(*) FROM "Attempt" a
+  INNER JOIN (SELECT "ID" FROM "Attempt" ORDER BY "Date" DESC, "ID" DESC LIMIT 100) AS latest
+    ON latest."ID" = a."ID"
+  WHERE a."TeacherID" = t."ID" AND a."Grade" >= 9
+) AS excellent_grades
+FROM "Teacher" t
+ORDER BY excellent_grades DESC
+LIMIT 10;
+ ID | LastName  | FirstName | excellent_grades 
+----+-----------+-----------+------------------
+  5 | Лукашевич | Сергей    |                9
+  7 | Романович | Игорь     |                6
+  3 | Ковальчук | Андрей    |                1
+ 10 | Гринкевич | Татьяна   |                1
+  8 | Жук       | Елена     |                0
+  9 | Мельник   | Дмитрий   |                0
+ 11 | Ярошевич  | Марина    |                0
+  1 | Пецевич   | Виктор    |                0
+ 12 | Новик     | Павел     |                0
+  2 | Гуща      | Юлия      |                0
+(10 rows)
+
+SELECT g."ID", g."Name", (
+  SELECT COUNT(*) FROM "StudentGroup" sg
+  WHERE sg."GroupID" = g."ID"
+) AS students_count
+FROM "Group" g
+ORDER BY students_count DESC, g."Name";
+ ID |    Name     | students_count 
+----+-------------+----------------
+  5 | СДП-ИНФ-241 |             10
+  7 | СДП-КБ-231  |             10
+  6 | СДП-МАТ-251 |             10
+  1 | СДП-ПИ-231  |             10
+  2 | СДП-ПИ-241  |             10
+  3 | СДП-ПИ-251  |             10
+  4 | СДП-ПИ-261  |             10
+  8 | ЗФК-ПИ-241  |              8
+(8 rows)
+
+SELECT g."ID", g."Name", COUNT(*) AS students_count
+FROM "Group" g
+INNER JOIN "StudentGroup" sg ON sg."GroupID" = g."ID"
+GROUP BY g."ID", g."Name"
+ORDER BY students_count DESC, g."Name";
+ ID |    Name     | students_count 
+----+-------------+----------------
+  5 | СДП-ИНФ-241 |             10
+  7 | СДП-КБ-231  |             10
+  6 | СДП-МАТ-251 |             10
+  1 | СДП-ПИ-231  |             10
+  2 | СДП-ПИ-241  |             10
+  3 | СДП-ПИ-251  |             10
+  4 | СДП-ПИ-261  |             10
+  8 | ЗФК-ПИ-241  |              8
+(8 rows)
+
+SELECT g."Name" AS group_name, s."LastName", s."FirstName",
+       ROUND(AVG(a."Grade"), 2) AS student_avg
+FROM "Student" s
+INNER JOIN "Attempt" a ON a."StudentID" = s."StudentID"
+INNER JOIN "StudentGroup" sg ON sg."StudentID" = s."StudentID"
+INNER JOIN "Group" g ON g."ID" = sg."GroupID"
+GROUP BY g."ID", g."Name", s."StudentID", s."LastName", s."FirstName"
+HAVING AVG(a."Grade") > (
+  SELECT AVG(a2."Grade") FROM "Attempt" a2
+  INNER JOIN "StudentGroup" sg2 ON sg2."StudentID" = a2."StudentID"
+  WHERE sg2."GroupID" = g."ID"
+)
+ORDER BY g."Name", student_avg DESC;
+ group_name  |  LastName  | FirstName | student_avg 
+-------------+------------+-----------+-------------
+ ЗФК-ПИ-241  | Волков     | Денис     |        7.00
+ ЗФК-ПИ-241  | Новик      | Анна      |        6.69
+ ЗФК-ПИ-241  | Новик      | Кирилл    |        6.69
+ ЗФК-ПИ-241  | Климович   | Виктория  |        6.50
+ ЗФК-ПИ-241  | Новик      | Ольга     |        6.47
+ СДП-ИНФ-241 | Павлюкевич | Андрей    |        7.43
+ СДП-ИНФ-241 | Лукашевич  | София     |        7.27
+ СДП-ИНФ-241 | Ярошевич   | Дмитрий   |        7.14
+ СДП-ИНФ-241 | Жук        | Дмитрий   |        6.59
+ СДП-КБ-231  | Мельник    | Никита    |        7.45
+ СДП-КБ-231  | Новик      | Виктория  |        7.00
+ СДП-КБ-231  | Козлова    | София     |        6.58
+ СДП-КБ-231  | Сидорова   | Мария     |        6.50
+ СДП-МАТ-251 | Мельник    | Полина    |        8.50
+ СДП-МАТ-251 | Карпович   | София     |        8.00
+ СДП-МАТ-251 | Шевчук     | Алина     |        7.50
+ СДП-МАТ-251 | Ковалёв    | Кирилл    |        7.17
+ СДП-МАТ-251 | Ярошевич   | Виктория  |        7.00
+ СДП-ПИ-231  | Романович  | Евгений   |        7.14
+ СДП-ПИ-231  | Мельник    | Егор      |        7.10
+ СДП-ПИ-231  | Бондаренко | Никита    |        6.90
+ СДП-ПИ-231  | Лукашевич  | Валерия   |        6.86
+ СДП-ПИ-231  | Шевчук     | Диана     |        6.71
+ СДП-ПИ-241  | Сидоров    | Денис     |        7.00
+ СДП-ПИ-241  | Гринкевич  | Анна      |        6.73
+ СДП-ПИ-241  | Гринкевич  | Никита    |        6.50
+ СДП-ПИ-241  | Шевчук     | Ольга     |        6.44
+ СДП-ПИ-241  | Гринкевич  | Владислав |        6.25
+ СДП-ПИ-251  | Карпович   | Алина     |        6.70
+ СДП-ПИ-251  | Климович   | Анна      |        6.58
+ СДП-ПИ-251  | Ярошевич   | Ксения    |        6.55
+ СДП-ПИ-251  | Бондаренко | Диана     |        6.30
+ СДП-ПИ-251  | Жук        | Денис     |        6.27
+ СДП-ПИ-251  | Волков     | Егор      |        6.17
+(34 rows)
+
